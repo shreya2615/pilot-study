@@ -20,7 +20,7 @@ const audioBlocks = { a: [1, 2, 3, 4, 5, 6], b: [7, 8, 9, 10, 11, 12, 13], c: [1
 const facePairs = [[1, 2], [1, 3], [2, 3], [4, 5], [4, 6], [5, 6]];
 const audioPairs = [[1, 2], [1, 3], [2, 3]];
 const questions = [
-  "Who seems more dominant?",
+  "Who do you think is more dominant?",
   "Who seems more trustworthy?",
   "Who seems more honest?",
   "Who looks taller?"
