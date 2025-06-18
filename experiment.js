@@ -4,6 +4,10 @@ const jsPsych = initJsPsych({
   on_finish: () => {
     fetch("https://script.google.com/macros/s/AKfycbxlf2qo2q94se7bWowfgxKXQSXE1Ll3wKmXWvmCv-8cBU8YguYzTcbh2-KxNUvGsoTUQg/exec", {
       method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(jsPsych.data.get().values())
     });
   }
