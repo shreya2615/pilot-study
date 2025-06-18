@@ -31,7 +31,11 @@ const consent = {
   stimulus: `
     <h2>Consent Form</h2>
     <p>By participating, you agree to take part in this study.</p>
-    <p>Please also complete this <a href="https://docs.google.com/forms/d/e/your-google-form-id/viewform" target="_blank">Google Form</a> before continuing.</p>
+    <p>Please also complete this form: <br>
+      <a href="https://docs.google.com/forms/d/e/your-google-form-id/viewform" target="_blank" style="font-size:18px; color:blue; text-decoration:underline;">
+        Click here to open the Google Form
+      </a>
+    </p>
     <p>Press SPACE to continue or 0 to exit.</p>
   `,
   choices: [' ', '0'],
