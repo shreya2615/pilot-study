@@ -1,4 +1,4 @@
-// === Fixed: Audio then One-by-One Questions, Images Restored ===
+// === Audio Trial with Sequential Questions Under Same Screen ===
 
 const jsPsych = initJsPsych({
   on_finish: () => {
@@ -39,14 +39,13 @@ const consent = {
 
 const instructions = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<p>You will first see a pair of audio clips. You must play both before continuing. Then, you will be asked four questions one at a time.</p>
+  stimulus: `<p>You will first see a pair of audio clips. You must play both before continuing. Then, four questions will appear one-by-one under the audios.</p>
     <p>Use keys 1 or 2 to respond. Press SPACE to begin.</p>`,
   choices: [' ']
 };
 
 let timeline = [consent, instructions];
 
-// === IMAGE COMPARISONS RESTORED ===
 blockOrder.forEach(blockKey => {
   const faceNums = imageBlocks[blockKey];
   faceNums.forEach(faceNum => {
@@ -54,7 +53,6 @@ blockOrder.forEach(blockKey => {
     facePairs.forEach(([v1, v2]) => {
       const img1 = `${group}_face${faceID}_${v1}.png`;
       const img2 = `${group}_face${faceID}_${v2}.png`;
-
       questions.forEach((question, index) => {
         timeline.push({
           type: jsPsychHtmlKeyboardResponse,
@@ -85,7 +83,6 @@ blockOrder.forEach(blockKey => {
   });
 });
 
-// === AUDIO TRIALS: AUDIO FIRST, THEN QUESTIONS ONE BY ONE ===
 blockOrder.forEach(blockKey => {
   const audioNums = audioBlocks[blockKey];
   audioNums.forEach(audioNum => {
@@ -94,62 +91,71 @@ blockOrder.forEach(blockKey => {
       const audio1File = `all_audios/${group}_voice${audioID}_pitch${p1}.wav`;
       const audio2File = `all_audios/${group}_voice${audioID}_pitch${p2}.wav`;
 
-      // AUDIO TRIAL ONLY
       timeline.push({
         type: jsPsychHtmlKeyboardResponse,
         stimulus: `
           <div style="text-align:center;">
             <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
-            <p><strong>Please play both audios before continuing.</strong></p>
+            <p><strong>Please play both audios. Questions will appear below after both are played.</strong></p>
             <div style="display: flex; justify-content: center; gap: 50px;">
-              <div><audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio></div>
-              <div><audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio></div>
+              <audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio>
+              <audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio>
             </div>
-            <p style="margin-top:20px;">Press SPACE after both have played.</p>
+            <div id="question-box" style="margin-top:30px;"></div>
+            <p id="instructions" style="margin-top:20px;"></p>
           </div>
         `,
-        choices: [' '],
+        choices: "NO_KEYS",
         on_load: () => {
           const a1 = document.getElementById("audio1");
           const a2 = document.getElementById("audio2");
+          const box = document.getElementById("question-box");
+          const instr = document.getElementById("instructions");
           let done1 = false, done2 = false;
-          const allowContinue = e => {
-            if (e.code === "Space" && done1 && done2) {
-              document.removeEventListener("keydown", allowContinue);
-              jsPsych.finishTrial();
+          let currentQ = 0;
+          let responses = [];
+
+          const showNextQuestion = () => {
+            if (currentQ < questions.length) {
+              box.innerHTML = `<p><strong>${questions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
+              jsPsych.pluginAPI.getKeyboardResponse({
+                callback_function: info => {
+                  responses.push({
+                    question: questions[currentQ],
+                    response: info.key,
+                    rt: info.rt
+                  });
+                  currentQ++;
+                  showNextQuestion();
+                },
+                valid_responses: ['1', '2'],
+                rt_method: 'performance',
+                persist: false,
+                allow_held_key: false
+              });
+            } else {
+              jsPsych.finishTrial({
+                modality: "audio",
+                audio_left: audio1File,
+                audio_right: audio2File,
+                audio_number: audioNum,
+                block: blockKey,
+                group: group,
+                responses: responses
+              });
             }
           };
-          a1.addEventListener("ended", () => { done1 = true; });
-          a2.addEventListener("ended", () => { done2 = true; });
-          document.addEventListener("keydown", allowContinue);
-        },
-        data: {
-          modality: "audio_intro",
-          audio_left: audio1File,
-          audio_right: audio2File,
-          audio_number: audioNum,
-          block: blockKey,
-          group: group
-        }
-      });
 
-      // 4 QUESTION TRIALS, ONE BY ONE
-      questions.forEach((question, index) => {
-        timeline.push({
-          type: jsPsychHtmlKeyboardResponse,
-          stimulus: `<p><strong>${question}</strong></p><p>Press 1 for first voice, 2 for second voice.</p>`,
-          choices: ['1', '2'],
-          data: {
-            modality: "audio_question",
-            question: question,
-            question_index: index + 1,
-            audio_left: audio1File,
-            audio_right: audio2File,
-            audio_number: audioNum,
-            block: blockKey,
-            group: group
-          }
-        });
+          const checkReady = () => {
+            if (done1 && done2) {
+              instr.innerHTML = "You may now begin answering. Press 1 or 2.";
+              showNextQuestion();
+            }
+          };
+
+          a1.addEventListener("ended", () => { done1 = true; checkReady(); });
+          a2.addEventListener("ended", () => { done2 = true; checkReady(); });
+        }
       });
     });
   });
