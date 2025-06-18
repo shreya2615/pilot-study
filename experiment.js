@@ -31,6 +31,7 @@ const consent = {
   stimulus: `
     <h2>Consent Form</h2>
     <p>By participating, you agree to take part in this study.</p>
+    <p>Please also complete this <a href="https://docs.google.com/forms/d/e/your-google-form-id/viewform" target="_blank">Google Form</a> before continuing.</p>
     <p>Press SPACE to continue or 0 to exit.</p>
   `,
   choices: [' ', '0'],
@@ -95,7 +96,6 @@ blockOrder.forEach(blockKey => {
       const audio1File = `all_audios/${group}_voice${audioID}_pitch${p1}.wav`;
       const audio2File = `all_audios/${group}_voice${audioID}_pitch${p2}.wav`;
 
-      // Enforced playback trial
       timeline.push({
         type: jsPsychHtmlKeyboardResponse,
         stimulus: `
