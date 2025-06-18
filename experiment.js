@@ -1,4 +1,4 @@
-// === experiment.js ===
+// === Updated Audio Trial with Questions on Same Screen ===
 
 const jsPsych = initJsPsych({
   on_finish: () => {
@@ -20,7 +20,6 @@ const blockOrder = blockOrders[participantID % 3];
 
 const imageBlocks = { a: [1, 2, 3], b: [4, 5, 6], c: [7, 8, 9, 10] };
 const audioBlocks = { a: [1, 2, 3, 4, 5, 6], b: [7, 8, 9, 10, 11, 12, 13], c: [14, 15, 16, 17, 18, 19, 20] };
-
 const facePairs = [[1, 2], [1, 3], [2, 3], [4, 5], [4, 6], [5, 6]];
 const audioPairs = [[1, 2], [1, 3], [2, 3]];
 const questions = [
@@ -37,7 +36,7 @@ const consent = {
     <p>By participating, you agree to take part in this study.</p>
     <p style="margin-top: 20px;">
       <strong>Please complete this form before proceeding:</strong><br>
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSekKKNoYVKAJmO7hAJdm-faJbXRo3Yv8LbsFzgvLKDzFORfvg/viewform?usp=header" target="_blank" 
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSekKKNoYVKAJmO7hAJdm-faJbXRo3Yv8LbsFzgvLKDzFORfvg/viewform?usp=header" target="_blank"
          style="font-size:18px; color:blue; text-decoration:underline; display:inline-block; margin-top:10px;">
         👉 Click here to open the Google Form
       </a>
@@ -63,102 +62,68 @@ const instructions = {
 let timeline = [consent, instructions];
 
 blockOrder.forEach(blockKey => {
-  const faceNums = imageBlocks[blockKey];
   const audioNums = audioBlocks[blockKey];
-
-  faceNums.forEach(faceNum => {
-    const faceID = faceNum.toString().padStart(2, "0");
-    facePairs.forEach(([v1, v2]) => {
-      const img1 = `${group}_face${faceID}_${v1}.png`;
-      const img2 = `${group}_face${faceID}_${v2}.png`;
-
-      questions.forEach(question => {
-        timeline.push({
-          type: jsPsychHtmlKeyboardResponse,
-          stimulus: `
-            <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
-            <p><b>Please review both images and answer the questions below.</b></p>
-            <div style='display:flex; justify-content:space-around;'>
-              <img src='all_images/${img1}' height='200'>
-              <img src='all_images/${img2}' height='200'>
-            </div>
-            <p>${question}</p>
-            <p>Press 1 for left, 2 for right.</p>
-          `,
-          choices: ['1', '2'],
-          data: {
-            modality: "image",
-            image_left: img1,
-            image_right: img2,
-            question: question,
-            face_number: faceNum,
-            group: group,
-            block: blockKey
-          }
-        });
-      });
-    });
-  });
 
   audioNums.forEach(audioNum => {
     const audioID = audioNum.toString().padStart(2, "0");
+
     audioPairs.forEach(([p1, p2]) => {
       const audio1File = `all_audios/${group}_voice${audioID}_pitch${p1}.wav`;
       const audio2File = `all_audios/${group}_voice${audioID}_pitch${p2}.wav`;
 
       timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
+        type: jsPsychHtmlButtonResponse,
         stimulus: `
           <div style="text-align:center;">
             <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
-            <p>Please click each audio to play them. You must listen before continuing.</p>
-          </div>
-          <div style="display: flex; justify-content: center; gap: 50px;">
-            <div><audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio></div>
-            <div><audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio></div>
-          </div>
-          <p style="text-align:center;"><strong>Press SPACE to continue after playing both audios.</strong></p>
-        `,
-        choices: [' '],
+            <p><strong>Please play both audios before answering the questions.</strong></p>
+            <div style="display: flex; justify-content: center; gap: 50px; margin-bottom: 10px;">
+              <div><audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio></div>
+              <div><audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio></div>
+            </div>
+            <form id="questionForm">
+              ${questions.map((q, i) => `
+                <p><strong>${q}</strong></p>
+                <label><input type="radio" name="q${i}" value="1" disabled> 1 (First)</label>
+                <label><input type="radio" name="q${i}" value="2" disabled> 2 (Second)</label>
+              `).join('<br>')}
+            </form>
+          `,
+        choices: ['Continue'],
+        button_html: '<button class="jspsych-btn" disabled id="continueBtn">%choice%</button>',
         on_load: () => {
-          const audio1 = document.getElementById("audio1");
-          const audio2 = document.getElementById("audio2");
-          let a1Played = false;
-          let a2Played = false;
+          const audio1 = document.getElementById('audio1');
+          const audio2 = document.getElementById('audio2');
+          const continueBtn = document.getElementById('continueBtn');
+          const form = document.getElementById('questionForm');
+          let played1 = false, played2 = false;
 
-          audio1.addEventListener("ended", () => { a1Played = true; });
-          audio2.addEventListener("ended", () => { a2Played = true; });
-
-          const listener = (e) => {
-            if (e.code === "Space" && a1Played && a2Played) {
-              document.removeEventListener("keydown", listener);
-              jsPsych.finishTrial();
+          const enableInputs = () => {
+            if (played1 && played2) {
+              form.querySelectorAll('input[type="radio"]').forEach(el => el.disabled = false);
+              continueBtn.disabled = false;
             }
           };
-          document.addEventListener("keydown", listener);
-        }
-      });
 
-      questions.forEach(question => {
-        timeline.push({
-          type: jsPsychHtmlKeyboardResponse,
-          stimulus: `
-            <div style="text-align:center;">
-              <p><b>${question}</b></p>
-              <p>Press 1 for first, 2 for second.</p>
-            </div>
-          `,
-          choices: ['1', '2'],
-          data: {
+          audio1.addEventListener('ended', () => { played1 = true; enableInputs(); });
+          audio2.addEventListener('ended', () => { played2 = true; enableInputs(); });
+        },
+        on_finish: () => {
+          const responses = {};
+          questions.forEach((q, i) => {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            responses[`Q${i + 1}`] = selected ? selected.value : '';
+          });
+          jsPsych.data.write({
             modality: "audio",
             audio_left: audio1File,
             audio_right: audio2File,
-            question: question,
             audio_number: audioNum,
             group: group,
-            block: blockKey
-          }
-        });
+            block: blockKey,
+            responses
+          });
+        }
       });
     });
   });
@@ -176,3 +141,4 @@ timeline.push({
 });
 
 jsPsych.run(timeline);
+
