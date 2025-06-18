@@ -31,12 +31,14 @@ const consent = {
   stimulus: `
     <h2>Consent Form</h2>
     <p>By participating, you agree to take part in this study.</p>
-    <p>Please also complete this form: <br>
-      <a href="https://docs.google.com/forms/d/e/your-google-form-id/viewform" target="_blank" style="font-size:18px; color:blue; text-decoration:underline;">
-        Click here to open the Google Form
+    <p style="margin-top: 20px;">
+      <strong>Please complete this form before proceeding:</strong><br>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSekKKNoYVKAJmO7hAJdm-faJbXRo3Yv8LbsFzgvLKDzFORfvg/viewform?usp=header" target="_blank" 
+         style="font-size:18px; color:blue; text-decoration:underline; display:inline-block; margin-top:10px;">
+        👉 Click here to open the Google Form
       </a>
     </p>
-    <p>Press SPACE to continue or 0 to exit.</p>
+    <p style="margin-top: 40px;">Press SPACE to continue or 0 to exit.</p>
   `,
   choices: [' ', '0'],
   on_finish: data => {
