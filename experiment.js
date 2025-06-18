@@ -48,6 +48,9 @@ let timeline = [consent, instructions];
 
 blockOrder.forEach(blockKey => {
   const faceNums = imageBlocks[blockKey];
+  const audioNums = audioBlocks[blockKey];
+
+  // IMAGE TRIALS
   faceNums.forEach(faceNum => {
     const faceID = faceNum.toString().padStart(2, "0");
     facePairs.forEach(([v1, v2]) => {
@@ -81,10 +84,8 @@ blockOrder.forEach(blockKey => {
       });
     });
   });
-});
 
-blockOrder.forEach(blockKey => {
-  const audioNums = audioBlocks[blockKey];
+  // AUDIO TRIALS
   audioNums.forEach(audioNum => {
     const audioID = audioNum.toString().padStart(2, "0");
     audioPairs.forEach(([p1, p2]) => {
