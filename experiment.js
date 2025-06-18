@@ -21,9 +21,9 @@ const facePairs = [[1, 2], [1, 3], [2, 3], [4, 5], [4, 6], [5, 6]];
 const audioPairs = [[1, 2], [1, 3], [2, 3]];
 const questions = [
   "Who do you think is more dominant?",
-  "Who seems more trustworthy?",
-  "Who seems more honest?",
-  "Who looks taller?"
+  "Who do you think is more trustworthy?",
+  "Who do you think is more honest?",
+  "Who do you think is taller?"
 ];
 
 const consent = {
@@ -49,7 +49,7 @@ const consent = {
 const instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p>You will see or hear two people and then answer four questions.</p>
+    <p>The experiment proceeds in 3 blocks, in each block you will first be required to view sets of images and answer the corresponding questions, then you will be required to listen to sets of audio comparisons and answer corresponding questions.</p>
     <p>Use the keys 1 or 2 to respond (1 = Left/First, 2 = Right/Second).</p>
     <p>Press SPACE to begin.</p>
   `,
