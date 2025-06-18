@@ -1,4 +1,4 @@
-// === Updated Audio Trial with Questions on Same Screen ===
+// === Audio + All Questions on One Screen After Playback ===
 
 const jsPsych = initJsPsych({
   on_finish: () => {
@@ -20,7 +20,6 @@ const blockOrder = blockOrders[participantID % 3];
 
 const imageBlocks = { a: [1, 2, 3], b: [4, 5, 6], c: [7, 8, 9, 10] };
 const audioBlocks = { a: [1, 2, 3, 4, 5, 6], b: [7, 8, 9, 10, 11, 12, 13], c: [14, 15, 16, 17, 18, 19, 20] };
-const facePairs = [[1, 2], [1, 3], [2, 3], [4, 5], [4, 6], [5, 6]];
 const audioPairs = [[1, 2], [1, 3], [2, 3]];
 const questions = [
   "Who do you think is more dominant?",
@@ -52,8 +51,8 @@ const consent = {
 const instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p>The experiment proceeds in 3 blocks, in each block you will first be required to view sets of images and answer the corresponding questions, then you will be required to listen to sets of audio comparisons and answer corresponding questions.</p>
-    <p>Use the keys 1 or 2 to respond (1 = Left/First, 2 = Right/Second).</p>
+    <p>The experiment proceeds in 3 blocks. In each block, you will first see a pair of audio clips. You must play both before answering any questions. Then, you will be asked four questions on the same screen.</p>
+    <p>Use the keys 1 or 2 to respond to each question (1 = First voice, 2 = Second voice).</p>
     <p>Press SPACE to begin.</p>
   `,
   choices: [' ']
@@ -72,7 +71,7 @@ blockOrder.forEach(blockKey => {
       const audio2File = `all_audios/${group}_voice${audioID}_pitch${p2}.wav`;
 
       timeline.push({
-        type: jsPsychHtmlButtonResponse,
+        type: jsPsychHtmlKeyboardResponse,
         stimulus: `
           <div style="text-align:center;">
             <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
@@ -81,50 +80,67 @@ blockOrder.forEach(blockKey => {
               <div><audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio></div>
               <div><audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio></div>
             </div>
-            <form id="questionForm">
-              ${questions.map((q, i) => `
-                <p><strong>${q}</strong></p>
-                <label><input type="radio" name="q${i}" value="1" disabled> 1 (First)</label>
-                <label><input type="radio" name="q${i}" value="2" disabled> 2 (Second)</label>
-              `).join('<br>')}
-            </form>
-          `,
-        choices: ['Continue'],
-        button_html: '<button class="jspsych-btn" disabled id="continueBtn">%choice%</button>',
+            <p><strong>${questions[0]}</strong><br>Press 1 or 2</p>
+          </div>
+        `,
+        choices: ['1', '2'],
         on_load: () => {
           const audio1 = document.getElementById('audio1');
           const audio2 = document.getElementById('audio2');
-          const continueBtn = document.getElementById('continueBtn');
-          const form = document.getElementById('questionForm');
           let played1 = false, played2 = false;
 
-          const enableInputs = () => {
-            if (played1 && played2) {
-              form.querySelectorAll('input[type="radio"]').forEach(el => el.disabled = false);
-              continueBtn.disabled = false;
+          const listener = (e) => {
+            if ((e.code === "Digit1" || e.code === "Digit2") && played1 && played2) {
+              jsPsych.pluginAPI.getKeyboardResponse({
+                callback_function: () => jsPsych.finishTrial(),
+                valid_responses: ['1', '2'],
+                rt_method: 'performance',
+                persist: false,
+                allow_held_key: false
+              });
+              document.removeEventListener("keydown", listener);
             }
           };
 
-          audio1.addEventListener('ended', () => { played1 = true; enableInputs(); });
-          audio2.addEventListener('ended', () => { played2 = true; enableInputs(); });
+          audio1.addEventListener("ended", () => { played1 = true; });
+          audio2.addEventListener("ended", () => { played2 = true; });
+          document.addEventListener("keydown", listener);
         },
-        on_finish: () => {
-          const responses = {};
-          questions.forEach((q, i) => {
-            const selected = document.querySelector(`input[name="q${i}"]:checked`);
-            responses[`Q${i + 1}`] = selected ? selected.value : '';
-          });
-          jsPsych.data.write({
-            modality: "audio",
+        data: {
+          modality: "audio_question",
+          question: questions[0],
+          question_index: 1,
+          audio_left: audio1File,
+          audio_right: audio2File,
+          audio_number: audioNum,
+          block: blockKey,
+          group: group
+        }
+      });
+
+      // Repeat for the other 3 questions
+      for (let i = 1; i < questions.length; i++) {
+        timeline.push({
+          type: jsPsychHtmlKeyboardResponse,
+          stimulus: `
+            <div style="text-align:center;">
+              <p><strong>${questions[i]}</strong></p>
+              <p>Press 1 for first voice, 2 for second voice.</p>
+            </div>
+          `,
+          choices: ['1', '2'],
+          data: {
+            modality: "audio_question",
+            question: questions[i],
+            question_index: i + 1,
             audio_left: audio1File,
             audio_right: audio2File,
             audio_number: audioNum,
-            group: group,
             block: blockKey,
-            responses
-          });
-        }
-      });
+            group: group
+          }
+        });
+      }
     });
   });
 });
