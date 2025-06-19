@@ -1,7 +1,7 @@
 // === Audio Trial with Sequential Questions Under Same Screen ===
 
 const jsPsych = initJsPsych({
-  on_finish: () => {
+  on_data_update: () => {
     fetch("https://script.google.com/macros/s/AKfycbxeLHPVsOgCAbzzZFzvLi4cBvm3CIDqgs5zA9xpD0xGHUTTJaCQN03rgT6eVyW9TKD7/exec", {
       method: "POST",
       mode: "no-cors",
