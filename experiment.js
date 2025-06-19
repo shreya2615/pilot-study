@@ -2,7 +2,7 @@
 
 const jsPsych = initJsPsych({
   on_finish: () => {
-    fetch("https://script.google.com/macros/s/AKfycbxlf2qo2q94se7bWowfgxKXQSXE1Ll3wKmXWvmCv-8cBU8YguYzTcbh2-KxNUvGsoTUQg/exec", {
+    fetch("https://script.google.com/macros/s/AKfycbxeLHPVsOgCAbzzZFzvLi4cBvm3CIDqgs5zA9xpD0xGHUTTJaCQN03rgT6eVyW9TKD7/exec", {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
