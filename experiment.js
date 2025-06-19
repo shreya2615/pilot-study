@@ -30,17 +30,17 @@ const questions = [
 const consent = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<h2>Consent Form</h2><p>By participating, you agree to take part in this study.</p>
-    <p><strong>Complete this form before proceeding:</strong><br>
+    <p><strong>Please complete this form before proceeding:</strong><br>
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSekKKNoYVKAJmO7hAJdm-faJbXRo3Yv8LbsFzgvLKDzFORfvg/viewform?usp=header" target="_blank">Click here</a></p>
-    <p>Press SPACE to continue or 0 to exit.</p>`,
+    <p>Press SPACE to continue.</p>`,
   choices: [' ', '0'],
   on_finish: data => { if (data.response === 48) jsPsych.endExperiment("You chose not to participate."); }
 };
 
 const instructions = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<p>You will first see a pair of audio clips. You must play both before continuing. Then, four questions will appear one-by-one under the audios.</p>
-    <p>Use keys 1 or 2 to respond. Press SPACE to begin.</p>`,
+  stimulus: `<p>The study will proceed in 3 blocks. In each block you will first see pairs of images followed by 4 questions for each pair. Then, you will see pairs of audios followed by 4 questions for each pair.</p>
+    <p>Use keys 1 or 2 to respond. Press SPACE to begin the experiment.</p>`,
   choices: [' ']
 };
 
@@ -61,13 +61,13 @@ blockOrder.forEach(blockKey => {
           type: jsPsychHtmlKeyboardResponse,
           stimulus: `
             <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
-            <p><b>Review both images and answer:</b></p>
+            <p><b>Review both images and answer the questions below:</b></p>
             <div style='display:flex; justify-content:space-around;'>
               <img src='all_images/${img1}' height='200'>
               <img src='all_images/${img2}' height='200'>
             </div>
             <p><strong>${question}</strong></p>
-            <p>Press 1 for left, 2 for right.</p>
+            <p>Press 1 for the left image or 2 for right image.</p>
           `,
           choices: ['1', '2'],
           data: {
@@ -97,7 +97,7 @@ blockOrder.forEach(blockKey => {
         stimulus: `
           <div style="text-align:center;">
             <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
-            <p><strong>Please play both audios. Questions will appear below after both are played.</strong></p>
+            <p><strong>Please play both audios and liste carefully. Questions will appear below after both are played.</strong></p>
             <div style="display: flex; justify-content: center; gap: 50px;">
               <audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio>
               <audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio>
@@ -149,7 +149,7 @@ blockOrder.forEach(blockKey => {
 
           const checkReady = () => {
             if (done1 && done2) {
-              instr.innerHTML = "You may now begin answering. Press 1 or 2.";
+              instr.innerHTML = "You may now begin answering. Press 1 for the left audio or 2 for the right audio.";
               showNextQuestion();
             }
           };
