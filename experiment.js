@@ -13,6 +13,7 @@ const jsPsych = initJsPsych({
 
 const group = jsPsych.randomization.sampleWithoutReplacement(["male", "female"], 1)[0];
 const participantID = jsPsych.data.getURLVariable("id") || Math.floor(Math.random() * 10000);
+jsPsych.data.addProperties({ participantID: participantID });
 const blockOrders = [["a", "b", "c"], ["b", "c", "a"], ["c", "a", "b"]];
 const blockOrder = blockOrders[participantID % 3];
 
