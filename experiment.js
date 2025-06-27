@@ -19,7 +19,7 @@ const blockOrder = blockOrders[participantID % 3];
 
 const imageBlocks = { a: [1, 2, 3], b: [4, 5, 6], c: [7, 8, 9, 10] };
 const audioBlocks = { a: [1, 2, 3, 4, 5, 6], b: [7, 8, 9, 10, 11, 12, 13], c: [14, 15, 16, 17, 18, 19, 20] };
-const facePairs = [[1, 2], [1, 3], [2, 3], [4, 5], [4, 6], [5, 6]];
+const facePairs = [[1, 2], [3, 1], [2, 3], [4, 5], [6, 4], [5, 6]];
 const audioPairs = [[1, 2], [1, 3], [2, 3]];
 const questions = [
   "1. Who do you think is more dominant?",
@@ -68,7 +68,7 @@ blockOrder.forEach(blockKey => {
               <img src='all_images/${img2}' height='200'>
             </div>
             <p><strong>${question}</strong></p>
-            <p>Press 1 for the left image or 2 for right image.</p>
+            <p>Press 1 for the left image or 2 for the right image.</p>
           `,
           choices: ['1', '2'],
           data: {
@@ -98,7 +98,7 @@ blockOrder.forEach(blockKey => {
         stimulus: `
           <div style="text-align:center;">
             <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
-            <p><strong>Please play both audios and liste carefully. Questions will appear below after both are played.</strong></p>
+            <p><strong>Please play both audios and listen carefully. Questions will appear below after both are played. You will answer 4 questions for each pair of audios</strong></p>
             <div style="display: flex; justify-content: center; gap: 50px;">
               <audio id="audio1" controls><source src="${audio1File}" type="audio/wav"></audio>
               <audio id="audio2" controls><source src="${audio2File}" type="audio/wav"></audio>
