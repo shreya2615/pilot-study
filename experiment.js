@@ -49,41 +49,46 @@ blockOrder.forEach(blockKey => {
   const faceNums = imageBlocks[blockKey];
   const audioNums = audioBlocks[blockKey];
 
-  let imageTrials = [];
+  let imageComparisons = [];
   faceNums.forEach(faceNum => {
     const faceID = faceNum.toString().padStart(2, "0");
     facePairs.forEach(([v1, v2]) => {
-      const img1 = `${group}_face${faceID}_${v1}.png`;
-      const img2 = `${group}_face${faceID}_${v2}.png`;
-      questions.forEach((question, index) => {
-        imageTrials.push({
-          type: jsPsychHtmlKeyboardResponse,
-          stimulus: `
-            <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
-            <p><b>Review both images and answer the questions below:</b></p>
-            <div style='display:flex; justify-content:space-around;'>
-              <img src='all_images/${img1}' height='200'>
-              <img src='all_images/${img2}' height='200'>
-            </div>
-            <p><strong>${question}</strong></p>
-            <p>Press 1 for the left image or 2 for the right image.</p>
-          `,
-          choices: ['1', '2'],
-          data: {
-            modality: "image",
-            image_left: img1,
-            image_right: img2,
-            question: question,
-            question_index: index + 1,
-            face_number: faceNum,
-            group: group,
-            block: blockKey
-          }
-        });
+      imageComparisons.push({
+        img1: `${group}_face${faceID}_${v1}.png`,
+        img2: `${group}_face${faceID}_${v2}.png`,
+        face_number: faceNum
       });
     });
   });
-  timeline.push(...jsPsych.randomization.shuffle(imageTrials));
+
+  jsPsych.randomization.shuffle(imageComparisons).forEach(({ img1, img2, face_number }) => {
+    questions.forEach((question, index) => {
+      timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+          <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
+          <p><b>Review both images and answer the question below:</b></p>
+          <div style='display:flex; justify-content:space-around;'>
+            <img src='all_images/${img1}' height='200'>
+            <img src='all_images/${img2}' height='200'>
+          </div>
+          <p><strong>${question}</strong></p>
+          <p>Press 1 for the left image or 2 for the right image.</p>
+        `,
+        choices: ['1', '2'],
+        data: {
+          modality: "image",
+          image_left: img1,
+          image_right: img2,
+          question: question,
+          question_index: index + 1,
+          face_number: face_number,
+          group: group,
+          block: blockKey
+        }
+      });
+    });
+  });
 
   let audioTrials = [];
   audioNums.forEach(audioNum => {
