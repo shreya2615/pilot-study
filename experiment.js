@@ -1,7 +1,7 @@
 const jsPsych = initJsPsych({
   show_progress_bar: true,
   auto_update_progress_bar: true,
-  on_data_update: () => {
+  on_finish: () => {
     fetch("https://script.google.com/macros/s/AKfycbz2P_LTypos__22szkVspBsprpYj-lTIcy9lfNNtauVWDxZle2SytAo8vbGwfLatvn9/exec", {
       method: "POST",
       mode: "no-cors",
@@ -17,8 +17,8 @@ function createEndOfBlockScreen(blockNumber) {
     stimulus: `
       <div style="text-align: center; padding: 40px;">
         <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
-        <p>You have completed this section.</p>
-        <p><strong>Press SPACE to continue.</strong></p>
+        <p>You have completed this section, return to screen 1.</p>
+        <p><strong> When prompted come back here and press SPACE to continue.</strong></p>
       </div>
     `,
     choices: [' ']
