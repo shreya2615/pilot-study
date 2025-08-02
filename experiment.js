@@ -33,7 +33,7 @@ function createEndOfBlockScreen(blockNumber) {
     stimulus: `
       <div style="text-align: center; padding: 40px;">
         <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
-        <p>You now have completed this section. Take a short break if needed.</p>
+        <p>You have completed this section. Take a short break if needed.</p>
         <p><strong>Press SPACE to continue.</strong></p>
       </div>
     `,
@@ -229,7 +229,7 @@ blockOrder.forEach(blockKey => {
          `,
 
         choices: "NO_KEYS",
-       on_load: () => {
+        on_load: () => {
           const a1 = document.getElementById("audio1");
           const a2 = document.getElementById("audio2");
           const box = document.getElementById("question-box");
@@ -264,10 +264,7 @@ blockOrder.forEach(blockKey => {
                 audio_number: audioNum,
                 block: blockKey,
                 group: group,
-                participantID: participantID,
-                question: audioQuestions[currentQ],
-                responses: info.key,
-                rt: info.rt
+                responses: responses
               });
             }
           };
