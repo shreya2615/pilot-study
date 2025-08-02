@@ -1,24 +1,30 @@
 const jsPsych = initJsPsych({
   show_progress_bar: true,
   auto_update_progress_bar: true,
-  on_data_update: function(data) {
-    firebase.database().ref("participants").push(data);
+  on_finish: function() {
+    const rawData = jsPsych.data.get().values();
+    const participantID = rawData[0]?.participantID || "unknown";
+
+    const formattedData = rawData.map(trial => {
+      const isImage = trial.modality === "image";
+      const isAudio = trial.modality === "audio";
+
+      return {
+        ParticipantID: trial.participantID || "unknown",
+        Group: trial.group || "unknown",
+        Block: trial.block || "",
+        LeftStimulus: isImage ? trial.image_left : (isAudio ? trial.audio_left : ""),
+        RightStimulus: isImage ? trial.image_right : (isAudio ? trial.audio_right : ""),
+        Question: trial.question || "",
+        Response: trial.response || "",
+        ReactionTime: trial.rt || "",
+        BreakDuration: trial.break_duration || ""
+      };
+    });
+
+    database.ref(`participants/${participantID}/finalData`).set(formattedData);
   }
 });
-
-function createEndOfBlockScreen(blockNumber) {
-  return {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `
-      <div style="text-align: center; padding: 40px;">
-        <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
-        <p>You have now completed this section. Take a short break if needed.</p>
-        <p><strong>Press SPACE to continue.</strong></p>
-      </div>
-    `,
-    choices: [' ']
-  };
-}
 
 const group = jsPsych.randomization.sampleWithoutReplacement(["male", "female"], 1)[0];
 const participantID = jsPsych.data.getURLVariable("id") || Math.floor(Math.random() * 10000);
