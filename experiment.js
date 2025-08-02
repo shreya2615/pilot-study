@@ -26,6 +26,20 @@ const jsPsych = initJsPsych({
   }
 });
 
+function createEndOfBlockScreen(blockNumber) {
+  return {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `
+      <div style="text-align: center; padding: 40px;">
+        <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
+        <p>You have completed this section. Take a short break if needed.</p>
+        <p><strong>Press SPACE to continue.</strong></p>
+      </div>
+    `,
+    choices: [' ']
+  };
+}
+
 const group = jsPsych.randomization.sampleWithoutReplacement(["male", "female"], 1)[0];
 const participantID = jsPsych.data.getURLVariable("id") || Math.floor(Math.random() * 10000);
 jsPsych.data.addProperties({ participantID: participantID });
