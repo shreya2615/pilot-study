@@ -9,7 +9,7 @@ function createEndOfBlockScreen(blockNumber) {
     stimulus: `
       <div style="text-align: center; padding: 40px;">
         <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
-        <p>You have completed this section. Take a short break if needed.</p>
+        <p>You have now completed this section. Take a short break if needed.</p>
         <p><strong>Press SPACE to continue.</strong></p>
       </div>
     `,
