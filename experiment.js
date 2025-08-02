@@ -1,16 +1,7 @@
 const jsPsych = initJsPsych({
-  const jsPsych = initJsPsych({
   show_progress_bar: true,
-  auto_update_progress_bar: true,
-  on_data_update: function(data) {
-    const participantID = jsPsych.data.get().values()[0]?.participantID || "unknown";
-    const trialIndex = jsPsych.data.get().values().length;
-
-    // Log each trial as it happens
-    database.ref(`participants/${participantID}/trial_${trialIndex}`).set(data);
-  }
+  auto_update_progress_bar: true
 });
-
 
 function createEndOfBlockScreen(blockNumber) {
   return {
