@@ -15,9 +15,10 @@ const jsPsych = initJsPsych({
         Block: trial.block || "",
         LeftStimulus: isImage ? trial.image_left : (isAudio ? trial.audio_left : ""),
         RightStimulus: isImage ? trial.image_right : (isAudio ? trial.audio_right : ""),
-        Question: trial.question || "",
-        Response: trial.response || "",
-        ReactionTime: trial.rt || "",
+        Question: trial.question || (trial.responses ? trial.responses.map(r => r.question).join(" | ") : ""),
+        Response: trial.response || (trial.responses ? trial.responses.map(r => r.response).join(" | ") : ""),
+        ReactionTime: trial.rt || (trial.responses ? trial.responses.map(r => r.rt).join(" | ") : ""),
+
         BreakDuration: trial.break_duration || ""
       };
     });
