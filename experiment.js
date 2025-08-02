@@ -230,55 +230,54 @@ blockOrder.forEach(blockKey => {
 
         choices: "NO_KEYS",
         on_load: () => {
-          const a1 = document.getElementById("audio1");
-          const a2 = document.getElementById("audio2");
-          const box = document.getElementById("question-box");
-          const instr = document.getElementById("instructions");
-          let done1 = false, done2 = false;
-          let currentQ = 0;
-          let responses = [];
+  const a1 = document.getElementById("audio1");
+  const a2 = document.getElementById("audio2");
+  const box = document.getElementById("question-box");
+  const instr = document.getElementById("instructions");
+  let done1 = false, done2 = false;
+  let currentQ = 0;
+  let responses = [];
 
-          const showNextQuestion = () => {
-            if (currentQ < audioQuestions.length) {
-              box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
-              jsPsych.pluginAPI.getKeyboardResponse({
-                callback_function: info => {
-                  responses.push({
-                    question: audioQuestions[currentQ],
-                    response: info.key,
-                    rt: info.rt
-                  });
-                  currentQ++;
-                  showNextQuestion();
-                },
-                valid_responses: ['1', '2'],
-                rt_method: 'performance',
-                persist: false,
-                allow_held_key: false
-              });
-            } else {
-              jsPsych.finishTrial({
-                modality: "audio",
-                audio_left: audio1File,
-                audio_right: audio2File,
-                audio_number: audioNum,
-                block: blockKey,
-                group: group,
-                responses: responses
-              });
-            }
-          };
+  const showNextQuestion = () => {
+    if (currentQ < audioQuestions.length) {
+      box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
+      jsPsych.pluginAPI.getKeyboardResponse({
+        callback_function: info => {
+          jsPsych.data.write({
+            modality: "audio",
+            audio_left: audio1File,
+            audio_right: audio2File,
+            audio_number: audioNum,
+            block: blockKey,
+            group: group,
+            participantID: participantID,
+            question: audioQuestions[currentQ],
+            response: info.key,
+            rt: info.rt
+          });
+          currentQ++;
+          showNextQuestion();
+        },
+        valid_responses: ['1', '2'],
+        rt_method: 'performance',
+        persist: false,
+        allow_held_key: false
+      });
+    } else {
+      jsPsych.finishTrial();
+    }
+  };
 
-          const checkReady = () => {
-            if (done1 && done2) {
-              instr.innerHTML = "Press 1 for Audio 1 or 2 for Audio 2.";
-              showNextQuestion();
-            }
-          };
+  const checkReady = () => {
+    if (done1 && done2) {
+      instr.innerHTML = "Press 1 for Audio 1 or 2 for Audio 2.";
+      showNextQuestion();
+    }
+  };
 
-          a1.addEventListener("ended", () => { done1 = true; checkReady(); });
-          a2.addEventListener("ended", () => { done2 = true; checkReady(); });
-        }
+  a1.addEventListener("ended", () => { done1 = true; checkReady(); });
+  a2.addEventListener("ended", () => { done2 = true; checkReady(); });
+}
       });
     });
   });
