@@ -1,15 +1,16 @@
 const jsPsych = initJsPsych({
+  const jsPsych = initJsPsych({
   show_progress_bar: true,
   auto_update_progress_bar: true,
-  on_finish: () => {
-    fetch("https://script.google.com/macros/s/AKfycbz2P_LTypos__22szkVspBsprpYj-lTIcy9lfNNtauVWDxZle2SytAo8vbGwfLatvn9/exec", {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(jsPsych.data.get().values())
-    });
+  on_data_update: function(data) {
+    const participantID = jsPsych.data.get().values()[0]?.participantID || "unknown";
+    const trialIndex = jsPsych.data.get().values().length;
+
+    // Log each trial as it happens
+    database.ref(`participants/${participantID}/trial_${trialIndex}`).set(data);
   }
 });
+
 
 function createEndOfBlockScreen(blockNumber) {
   return {
@@ -17,8 +18,8 @@ function createEndOfBlockScreen(blockNumber) {
     stimulus: `
       <div style="text-align: center; padding: 40px;">
         <h2 style="color: #333;">End of Block ${blockNumber.toUpperCase()}</h2>
-        <p>You have completed this section, return to screen 1.</p>
-        <p><strong> When prompted come back here and press SPACE to continue.</strong></p>
+        <p>You have completed this section. Take a short break if needed.</p>
+        <p><strong>Press SPACE to continue.</strong></p>
       </div>
     `,
     choices: [' ']
@@ -49,19 +50,8 @@ const audioQuestions = [
   "Who sounds more honest?",
   "Who sounds taller?",
   "Which voice do you prefer?",
-  "Do these voices sound robotic? (1 = Yes, 2 = No)"
+  "Do these voices sound more human or robotic to you (1 = Human, 2 = Robotic)"
 ];
-
-
-const consent = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<h2>Consent Form</h2><p>By participating, you agree to take part in this study.</p>
-    <p><strong>Please complete this form before proceeding, once completed return to this page:</strong><br>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSekKKNoYVKAJmO7hAJdm-faJbXRo3Yv8LbsFzgvLKDzFORfvg/viewform?usp=header" target="_blank">Click here</a></p>
-    <p>Once the form is completed Press SPACE to continue if you have consented to participate, if not please exit this screen now.</p>`,
-  choices: [' ', '0'],
-  on_finish: data => { if (data.response === 48) jsPsych.endExperiment("You chose not to participate."); }
-};
 
 const instructions = {
   type: jsPsychHtmlKeyboardResponse,
@@ -70,7 +60,8 @@ const instructions = {
     <p>In this study, you will complete a series of tasks involving <strong>images</strong> and <strong>audio clips</strong>.</p>
     <p>There will be 3 blocks in total, Blocks A, B, and C (presented randomly). In each block, you'll first see image pairs and answer 5 questions about each pair, followed by audio pairs with 6 questions per pair.</p>
     <p>You will use the number keys (1 or 2) to respond.</p>
-    <p>Before you begin, please ensure you're in a quiet space.</p>
+    <p>This experiment will take approximately 45 minutes to complete. Before you begin, please ensure you're in a quiet space.</p>
+    <p>If you wish to stop at any point, simply close this page and your data will not be recorded.</p>
     <p><em>Press the spacebar to view examples of the image and audio pairs before you begin the actual experiment.</em></p>
   `,
   choices: [' ']
@@ -127,13 +118,14 @@ const preExperimentInstructions = {
   stimulus: `
     <p>You will now start the actual experiment.</p>
     <p>Remember to use the number keys (1 or 2) to respond to each question.</p>
+    <p>Each block will take approximately 15 minutes to complete.</p>
     <p>Make sure you're in a quiet space and give each question your full attention.</p>
     <p><strong>Press the spacebar to begin the first block.</strong></p>
   `,
   choices: [' ']
 };
 
-let timeline = [consent, instructions, exampleImageTrial, exampleAudioTrial, preExperimentInstructions];
+let timeline = [instructions, exampleImageTrial, exampleAudioTrial, preExperimentInstructions];
 
 blockOrder.forEach(blockKey => {
   const faceNums = imageBlocks[blockKey];
@@ -278,7 +270,9 @@ blockOrder.forEach(blockKey => {
 
   timeline.push(...jsPsych.randomization.shuffle(audioTrials));
 
-  timeline.push(createEndOfBlockScreen(blockKey));
+  if (blockKey !== blockOrder[blockOrder.length - 1]) {
+    timeline.push(createEndOfBlockScreen(blockKey));
+  }
 });
 
 timeline.push({
