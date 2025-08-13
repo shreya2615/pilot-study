@@ -1,3 +1,16 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyCfcJieihGrW2FYOBYLsNp7FaFl2itYJbE",
+  authDomain: "pilot-study-1.firebaseapp.com",
+  databaseURL: "https://pilot-study-1-default-rtdb.firebaseio.com",
+  projectId: "pilot-study-1",
+  storageBucket: "pilot-study-1.firebasestorage.app",
+  messagingSenderId: "41340007588",
+  appId: "1:41340007588:web:6e6206d869ac2f4f30a231"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 const jsPsych = initJsPsych({
   show_progress_bar: true,
   auto_update_progress_bar: true,
@@ -44,6 +57,44 @@ function createEndOfBlockScreen(blockNumber) {
 const group = jsPsych.randomization.sampleWithoutReplacement(["male", "female"], 1)[0];
 const participantID = jsPsych.data.getURLVariable("id") || Math.floor(Math.random() * 10000);
 jsPsych.data.addProperties({ participantID: participantID });
+// Send each trial to Firebase as soon as it finishes
+jsPsych.onTrialFinish(function(data) {
+  const pid = jsPsych.data.get().values()[0]?.participantID || "unknown";
+
+  // Audio trials: log each question separately
+  if (data.modality === "audio" && Array.isArray(data.responses)) {
+    data.responses.forEach(r => {
+      database.ref(`participants/${pid}/trials`).push({
+        ParticipantID: pid,
+        Group: data.group || "unknown",
+        Block: data.block || "",
+        Modality: "audio",
+        LeftStimulus: data.audio_left || "",
+        RightStimulus: data.audio_right || "",
+        Question: r.question || "",
+        Response: r.response ?? "",
+        ReactionTime: r.rt ?? "",
+        timestamp: Date.now()
+      }).catch(e => console.error("[firebase] push failed:", e));
+    });
+    return;
+  }
+
+  // All other trials (image, breaks, etc.)
+  database.ref(`participants/${pid}/trials`).push({
+    ParticipantID: pid,
+    Group: data.group || "unknown",
+    Block: data.block || "",
+    Modality: data.modality || "",
+    LeftStimulus: data.image_left || data.audio_left || "",
+    RightStimulus: data.image_right || data.audio_right || "",
+    Question: data.question || "",
+    Response: data.response ?? "",
+    ReactionTime: data.rt ?? "",
+    timestamp: Date.now()
+  }).catch(e => console.error("[firebase] push failed:", e));
+});
+
 const blockOrders = [["a", "b", "c"], ["b", "c", "a"], ["c", "a", "b"]];
 const blockOrder = blockOrders[participantID % 3];
 
@@ -73,9 +124,9 @@ const instructions = {
   stimulus: `
     <h2>Welcome to the experiment</h2>
     <p>In this study, you will complete a series of tasks involving <strong>images</strong> and <strong>audio clips</strong>.</p>
-    <p>There will be 3 blocks in total, Blocks A, B, and C (presented randomly). In each block, you'll first see image pairs and answer 5 questions about each pair, followed by audio pairs with 6 questions per pair.</p>
+    <p>There will be 3 blocks in total, Blocks A, B, and C (presented randomly). In each block, you'll first see image pairs and answer 5 questions about each pair, followed by audio pairs with 6 questions per pair. You may listen to the audio clips using either headphones or your computer speaker.</p>
     <p>You will use the number keys (1 or 2) to respond.</p>
-    <p>This experiment will take approximately 45 minutes to complete. Before you begin, please ensure you're in a quiet space.</p>
+    <p>This experiment will take approximately 45 minutes to complete. Before you begin, please ensure you're in a quiet space and have a strong Wi-Fi connection.</p>
     <p>If you wish to stop at any point, simply close this page and your data will not be recorded.</p>
     <p><em>Press the spacebar to view examples of the image and audio pairs before you begin the actual experiment.</em></p>
   `,
@@ -114,18 +165,26 @@ const exampleAudioTrial = {
     <div style="display: flex; justify-content: center; gap: 50px;">
       <div style='text-align:center;'>
         <p><strong>Audio 1</strong></p>
-        <audio controls><source src="all_audios/example1.wav" type="audio/wav"></audio>
+        <audio id="example1" controls controlsList="nodownload noplaybackrate">
+          <source src="all_audios/example1.wav" type="audio/wav">
+        </audio>
       </div>
       <div style='text-align:center;'>
         <p><strong>Audio 2</strong></p>
-        <audio controls><source src="all_audios/example2.wav" type="audio/wav"></audio>
+        <audio id="example2" controls controlsList="nodownload noplaybackrate">
+          <source src="all_audios/example2.wav" type="audio/wav">
+        </audio>
       </div>
     </div>
     <p><strong>Example question:</strong> Which speaker is talking faster?</p>
     <p><em>You would press 1 for Audio 1 or 2 for Audio 2 in the real study.</em></p>
     <p>Press SPACE to continue.</p>
   `,
-  choices: [' ']
+  choices: [' '],
+  on_load: () => {
+    document.getElementById("example1").playbackRate = 1.0;
+    document.getElementById("example2").playbackRate = 1.0;
+  }
 };
 
 const preExperimentInstructions = {
@@ -202,83 +261,91 @@ blockOrder.forEach(blockKey => {
       const audio2File = `all_audios/${group}_voice${audioID}_pitch${p2}.wav`;
 
       audioTrials.push({
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `
-          <div style="text-align:center;">
-            <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
-            <p><strong>Please listen to each audio recording carefully. After they finish playing, answer the following questions.</strong></p>
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                  <div style="text-align:center;">
+                        <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
+                        <p><strong>Please listen to each audio recording carefully. After they finish playing, answer the following questions.</strong></p>
 
-            <div style="display: flex; justify-content: center; gap: 50px;">
-              <div style="text-align: center;">
-               <p><strong>Audio 1</strong></p>
-               <audio id="audio1" controls>
-                 <source src="${audio1File}" type="audio/wav">
-                </audio>
-              </div>
-              <div style="text-align: center;">
-                <p><strong>Audio 2</strong></p>
-                <audio id="audio2" controls>
-                  <source src="${audio2File}" type="audio/wav">
-                </audio>
-              </div>
-            </div>
+                        <div style="display: flex; justify-content: center; gap: 50px;">
+                              <div style="text-align: center;">
+                                    <p><strong>Audio 1</strong></p>
+                                    <audio id="audio1" controls controlsList="noplaybackrate">
+                                          <source src="${audio1File}" type="audio/wav">
+                                    </audio>
+                              </div>
+                              <div style="text-align: center;">
+                                    <p><strong>Audio 2</strong></p>
+                                    <audio id="audio2" controls controlsList="noplaybackrate">
+                                          <source src="${audio2File}" type="audio/wav">
+                                    </audio>
+                              </div>
+                        </div>
 
-            <div id="question-box" style="margin-top:30px;"></div>
-            <p id="instructions" style="margin-top:20px;"></p>
-           </div>
-         `,
+                        <div id="question-box" style="margin-top:30px;"></div>
+                        <p id="instructions" style="margin-top:20px;"></p>
+                  </div>
+            `,
+            choices: "NO_KEYS",
 
-        choices: "NO_KEYS",
-        on_load: () => {
-          const a1 = document.getElementById("audio1");
-          const a2 = document.getElementById("audio2");
-          const box = document.getElementById("question-box");
-          const instr = document.getElementById("instructions");
-          let done1 = false, done2 = false;
-          let currentQ = 0;
-          let responses = [];
+            on_load: () => {
+                  const a1 = document.getElementById("audio1");
+                  const a2 = document.getElementById("audio2");
+                  const box = document.getElementById("question-box");
+                  const instr = document.getElementById("instructions");
 
-          const showNextQuestion = () => {
-            if (currentQ < audioQuestions.length) {
-              box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
-              jsPsych.pluginAPI.getKeyboardResponse({
-                callback_function: info => {
-                  responses.push({
-                    question: audioQuestions[currentQ],
-                    response: info.key,
-                    rt: info.rt
-                  });
-                  currentQ++;
-                  showNextQuestion();
-                },
-                valid_responses: ['1', '2'],
-                rt_method: 'performance',
-                persist: false,
-                allow_held_key: false
-              });
-            } else {
-              jsPsych.finishTrial({
-                modality: "audio",
-                audio_left: audio1File,
-                audio_right: audio2File,
-                audio_number: audioNum,
-                block: blockKey,
-                group: group,
-                responses: responses
-              });
+                  let done1 = false, done2 = false;
+                  let currentQ = 0;
+                  let responses = [];
+                  let questionsStarted = false; // prevents double start
+
+                  const showNextQuestion = () => {
+                        // clear any old keyboard listeners
+                        jsPsych.pluginAPI.cancelAllKeyboardResponses();
+
+                        if (currentQ < audioQuestions.length) {
+                              box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
+                              jsPsych.pluginAPI.getKeyboardResponse({
+                                    callback_function: info => {
+                                          responses.push({
+                                                question: audioQuestions[currentQ],
+                                                response: info.key,
+                                                rt: info.rt
+                                          });
+                                          currentQ++;
+                                          showNextQuestion();
+                                    },
+                                    valid_responses: ['1', '2'],
+                                    rt_method: 'performance',
+                                    persist: false,
+                                    allow_held_key: false
+                              });
+                        } else {
+                              // finish the trial once all questions answered
+                              jsPsych.finishTrial({
+                                    modality: "audio",
+                                    audio_left: audio1File,
+                                    audio_right: audio2File,
+                                    audio_number: audioNum,
+                                    block: blockKey,
+                                    group: group,
+                                    responses: responses
+                              });
+                        }
+                  };
+
+                  const checkReady = () => {
+                        if (done1 && done2 && !questionsStarted) {
+                              questionsStarted = true;
+                              instr.innerHTML = "Press 1 for Audio 1 or 2 for Audio 2.";
+                              showNextQuestion();
+                        }
+                  };
+
+                  // Listen for audio completion
+                  a1.addEventListener("ended", () => { done1 = true; checkReady(); }, { once: true });
+                  a2.addEventListener("ended", () => { done2 = true; checkReady(); }, { once: true });
             }
-          };
-
-          const checkReady = () => {
-            if (done1 && done2) {
-              instr.innerHTML = "Press 1 for Audio 1 or 2 for Audio 2.";
-              showNextQuestion();
-            }
-          };
-
-          a1.addEventListener("ended", () => { done1 = true; checkReady(); });
-          a2.addEventListener("ended", () => { done2 = true; checkReady(); });
-        }
       });
     });
   });
