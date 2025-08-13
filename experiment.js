@@ -14,14 +14,15 @@ const database = firebase.database();
 const jsPsych = initJsPsych({
   show_progress_bar: true,
   auto_update_progress_bar: true,
-  on_finish: function() {
+
+  // runs once at the very end
+  on_finish: function () {
     const rawData = jsPsych.data.get().values();
     const participantID = rawData[0]?.participantID || "unknown";
 
     const formattedData = rawData.map(trial => {
       const isImage = trial.modality === "image";
       const isAudio = trial.modality === "audio";
-
       return {
         ParticipantID: trial.participantID || "unknown",
         Group: trial.group || "unknown",
@@ -31,12 +32,49 @@ const jsPsych = initJsPsych({
         Question: trial.question || (trial.responses ? trial.responses.map(r => r.question).join(" | ") : ""),
         Response: trial.response || (trial.responses ? trial.responses.map(r => r.response).join(" | ") : ""),
         ReactionTime: trial.rt || (trial.responses ? trial.responses.map(r => r.rt).join(" | ") : ""),
-
         BreakDuration: trial.break_duration || ""
       };
     });
 
     database.ref(`participants/${participantID}/finalData`).set(formattedData);
+  },
+
+  // runs after EVERY trial finishes
+  on_trial_finish: function (data) {
+    const pid = jsPsych.data.get().values()[0]?.participantID || "unknown";
+
+    // Audio trials: log each question separately
+    if (data.modality === "audio" && Array.isArray(data.responses)) {
+      data.responses.forEach(r => {
+        database.ref(`participants/${pid}/trials`).push({
+          ParticipantID: pid,
+          Group: data.group || "unknown",
+          Block: data.block || "",
+          Modality: "audio",
+          LeftStimulus: data.audio_left || "",
+          RightStimulus: data.audio_right || "",
+          Question: r.question || "",
+          Response: r.response ?? "",
+          ReactionTime: r.rt ?? "",
+          timestamp: Date.now()
+        }).catch(e => console.error("[firebase] push failed:", e));
+      });
+      return;
+    }
+
+    // All other trials (image, breaks, etc.)
+    database.ref(`participants/${pid}/trials`).push({
+      ParticipantID: pid,
+      Group: data.group || "unknown",
+      Block: data.block || "",
+      Modality: data.modality || "",
+      LeftStimulus: data.image_left || data.audio_left || "",
+      RightStimulus: data.image_right || data.audio_right || "",
+      Question: data.question || "",
+      Response: data.response ?? "",
+      ReactionTime: data.rt ?? "",
+      timestamp: Date.now()
+    }).catch(e => console.error("[firebase] push failed:", e));
   }
 });
 
@@ -57,44 +95,6 @@ function createEndOfBlockScreen(blockNumber) {
 const group = jsPsych.randomization.sampleWithoutReplacement(["male", "female"], 1)[0];
 const participantID = jsPsych.data.getURLVariable("id") || Math.floor(Math.random() * 10000);
 jsPsych.data.addProperties({ participantID: participantID });
-// Send each trial to Firebase as soon as it finishes
-jsPsych.onTrialFinish(function(data) {
-  const pid = jsPsych.data.get().values()[0]?.participantID || "unknown";
-
-  // Audio trials: log each question separately
-  if (data.modality === "audio" && Array.isArray(data.responses)) {
-    data.responses.forEach(r => {
-      database.ref(`participants/${pid}/trials`).push({
-        ParticipantID: pid,
-        Group: data.group || "unknown",
-        Block: data.block || "",
-        Modality: "audio",
-        LeftStimulus: data.audio_left || "",
-        RightStimulus: data.audio_right || "",
-        Question: r.question || "",
-        Response: r.response ?? "",
-        ReactionTime: r.rt ?? "",
-        timestamp: Date.now()
-      }).catch(e => console.error("[firebase] push failed:", e));
-    });
-    return;
-  }
-
-  // All other trials (image, breaks, etc.)
-  database.ref(`participants/${pid}/trials`).push({
-    ParticipantID: pid,
-    Group: data.group || "unknown",
-    Block: data.block || "",
-    Modality: data.modality || "",
-    LeftStimulus: data.image_left || data.audio_left || "",
-    RightStimulus: data.image_right || data.audio_right || "",
-    Question: data.question || "",
-    Response: data.response ?? "",
-    ReactionTime: data.rt ?? "",
-    timestamp: Date.now()
-  }).catch(e => console.error("[firebase] push failed:", e));
-});
-
 const blockOrders = [["a", "b", "c"], ["b", "c", "a"], ["c", "a", "b"]];
 const blockOrder = blockOrders[participantID % 3];
 
