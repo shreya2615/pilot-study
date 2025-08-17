@@ -1,3 +1,11 @@
+var style = document.createElement('style');
+style.innerHTML = `
+  body {
+    font-size: 23px !important;
+  }
+`;
+document.head.appendChild(style);
+
 const firebaseConfig = {
   apiKey: "AIzaSyCfcJieihGrW2FYOBYLsNp7FaFl2itYJbE",
   authDomain: "pilot-study-1.firebaseapp.com",
@@ -127,7 +135,7 @@ const instructions = {
     <p>There will be 3 blocks in total, Blocks A, B, and C (presented randomly). In each block, you'll first see image pairs and answer 5 questions about each pair, followed by audio pairs with 6 questions per pair. You may listen to the audio clips using either headphones or your computer speaker.</p>
     <p>You will use the number keys (1 or 2) to respond.</p>
     <p>This experiment will take approximately 45 minutes to complete. Before you begin, please ensure you're in a quiet space and have a strong Wi-Fi connection.</p>
-    <p>If you wish to stop at any point, simply close this page and your data will not be recorded.</p>
+    <p>If you wish to stop at any point, simply close this tab and your data will not be recorded.</p>
     <p><em>Press the spacebar to view examples of the image and audio pairs before you begin the actual experiment.</em></p>
   `,
   choices: [' ']
@@ -139,6 +147,7 @@ const exampleImageTrial = {
     <h3>Image Pair Example</h3>
     <p><em>Note: The following example images and questions are not part of the actual experiment. They are included only to illustrate how stimuli will be presented.</em></p>
     <p>In the actual study, you will see different image pairs, followed by 5 different questions.</p>
+    <p><em>Both images may take a few seconds to load.</em></p>
     <div style='display:flex; justify-content:space-around;'>
       <div style='text-align: center;'>
         <p><strong>Image 1</strong></p>
@@ -225,6 +234,7 @@ blockOrder.forEach(blockKey => {
         stimulus: `
           <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
           <p><b>Please review both images and answer the question below:</b></p>
+          <p><em>Both images may take a few seconds to load.</em></p>
 	  <div style='display:flex; justify-content:space-around; align-items: center;'>
            <div style='text-align: center;'>
             <p><strong>Image 1</strong></p>
@@ -294,17 +304,32 @@ blockOrder.forEach(blockKey => {
                   const box = document.getElementById("question-box");
                   const instr = document.getElementById("instructions");
 
-                  let done1 = false, done2 = false;
+                  let done1 = false;
+                  let done2 = false;
                   let currentQ = 0;
                   let responses = [];
                   let questionsStarted = false; // prevents double start
+
+                  a2.addEventListener("play", () => {
+                    if (!done1) {
+                      a2.pause();
+                      a2.currentTime = 0;
+                      alert("You must play Audio 1 first.");
+                    }
+                  });
+
+                  a1.addEventListener("ended", () => {
+                    done1 = true;
+                    a2.disabled = false;
+                  });
 
                   const showNextQuestion = () => {
                         // clear any old keyboard listeners
                         jsPsych.pluginAPI.cancelAllKeyboardResponses();
 
                         if (currentQ < audioQuestions.length) {
-                              box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p><p>Press 1 or 2</p>`;
+                              box.innerHTML = `<p><strong>${audioQuestions[currentQ]}</strong></p>
+                                               <p>Press 1 for Audio 1 or 2 for Audio 2</p>`;
                               jsPsych.pluginAPI.getKeyboardResponse({
                                     callback_function: info => {
                                           responses.push({
@@ -334,18 +359,16 @@ blockOrder.forEach(blockKey => {
                         }
                   };
 
-                  const checkReady = () => {
-                        if (done1 && done2 && !questionsStarted) {
-                              questionsStarted = true;
-                              instr.innerHTML = "Press 1 for Audio 1 or 2 for Audio 2.";
-                              showNextQuestion();
-                        }
-                  };
-
-                  // Listen for audio completion
-                  a1.addEventListener("ended", () => { done1 = true; checkReady(); }, { once: true });
-                  a2.addEventListener("ended", () => { done2 = true; checkReady(); }, { once: true });
-            }
+                  a2.addEventListener("ended", () => {
+                      done2 = true;
+                      if (!questionsStarted) {
+                        questionsStarted = true;
+                        showNextQuestion();
+                        a1.disabled = false;
+                        a2.disabled = false;
+                      }
+                  }, {once: true});
+        }
       });
     });
   });
