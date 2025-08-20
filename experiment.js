@@ -135,7 +135,7 @@ const instructions = {
     <p>There will be 3 blocks in total, Blocks A, B, and C (presented randomly). In each block, you'll first see image pairs and answer 5 questions about each pair, followed by audio pairs with 6 questions per pair. You may listen to the audio clips using either headphones or your computer speaker.</p>
     <p>You will use the number keys (1 or 2) to respond.</p>
     <p>This experiment will take approximately 45 minutes to complete. Before you begin, please ensure you're in a quiet space and have a strong Wi-Fi connection.</p>
-    <p>If you wish to stop at any point, simply close this tab and your data will not be recorded.</p>
+    <p>If you wish to stop participating in this study at any point, simply close the window and your data will not be recorded.</p>
     <p><em>Press the spacebar to view examples of the image and audio pairs before you begin the actual experiment.</em></p>
   `,
   choices: [' ']
