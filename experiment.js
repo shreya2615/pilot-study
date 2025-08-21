@@ -3,6 +3,16 @@ style.innerHTML = `
   body {
     font-size: 23px !important;
   }
+
+  /* Progress bar styling */
+  #jspsych-progressbar-container {
+    height: 30px !important;      /* make the container taller */
+    margin-bottom: 15px;          /* add spacing below if you like */
+  }
+  #jspsych-progressbar {
+    height: 30px !important;      /* make the bar itself taller */
+    border-radius: 6px;           /* rounded corners */
+  }
 `;
 document.head.appendChild(style);
 
@@ -232,7 +242,7 @@ blockOrder.forEach(blockKey => {
       timeline.push({
         type: jsPsychHtmlKeyboardResponse,
         stimulus: `
-          <p style='font-size:12px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
+          <p style='font-size:28px;'>BLOCK: ${blockKey.toUpperCase()} (Image)</p>
           <p><b>Please review both images and answer the question below:</b></p>
           <p><em>Both images may take a few seconds to load.</em></p>
 	  <div style='display:flex; justify-content:space-around; align-items: center;'>
@@ -274,7 +284,7 @@ blockOrder.forEach(blockKey => {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
                   <div style="text-align:center;">
-                        <p style="font-size:12px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
+                        <p style="font-size:28px;">BLOCK: ${blockKey.toUpperCase()} (Audio)</p>
                         <p><strong>Please listen to each audio recording carefully. After they finish playing, answer the following questions.</strong></p>
 
                         <div style="display: flex; justify-content: center; gap: 50px;">
