@@ -392,7 +392,7 @@ blockOrder.forEach(blockKey => {
 
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<h2>Thank you for participating!</h2><p>Your responses have been recorded. You may now close this window.</p>`,
+  stimulus: `<h2>Thank you for participating!</h2><p>Please click on the link below to be redirected to cloud research and then close this window.<p><p>https://connect.cloudresearch.com/participant/project/5F5AFDFE77/complete</p>`,
   choices: "NO_KEYS",
   trial_duration: 5000
 });
